@@ -1,7 +1,9 @@
 import { stdin } from 'process';
 import WebSocket, { createWebSocketStream } from 'ws';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const ws = new WebSocket('ws://localhost:8080');
+const ws = new WebSocket(process.env.WS_CLIENT_URL);
 
 const duplex = createWebSocketStream(ws, { encoding: 'utf8' });
 
