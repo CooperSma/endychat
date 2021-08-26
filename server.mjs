@@ -12,7 +12,7 @@ console.log(chalk.blue(`
  ##::. ##:: ##::::::: ##::::::: ##.... ##:::: ##::::
  ##:::. ##: ########: ########: ##:::: ##:::: ##::::
 `));
-console.log(chalk.green("--> Server has started on port " + wss.address().port))
+console.log(chalk.green("--> Server is listening on port " + wss.address().port))
 wss.on('connection', function connection(ws, req) {
   ws.uuid = randomUUID();
   ws.name = ws.uuid;
