@@ -21,6 +21,7 @@ wss.on('connection', function connection(ws, req) {
       ws.username = String(message).substring(10)
       ws.username = String(ws.username).substring(0, ws.username.length - 1);
       ws.name = ws.username;
+      console.log(chalk.blue('--> ' + ws.uuid + ' is now known as ' + ws.name));
     } else {
       wss.clients.forEach(function each(client) {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -29,7 +30,7 @@ wss.on('connection', function connection(ws, req) {
       });
     } 
   });
-  console.log(ws.name + ' has joined the chat')
+  console.log(chalk.green('--> ' + ws.name + ' has joined the chat'));
   wss.clients.forEach(function each(client) { 
     if(client !== ws && client.readyState === WebSocket.OPEN) {
       client.send(chalk.green('--> ' + ws.name + ' has joined the chat') + '\n') 
@@ -41,6 +42,7 @@ wss.on('connection', function connection(ws, req) {
     wss.clients.forEach(function each(client) { 
       client.send(chalk.red('--> ' + ws.name + ' has left the chat') + '\n') 
     });
+    console.log(chalk.red("--> " + ws.name + ' has left the chat'));
   });
 });
 
