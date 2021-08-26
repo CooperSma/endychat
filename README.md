@@ -1,6 +1,6 @@
-# relay
+## relay
 The backend for Relay
 
-Terminal User Interface:
+TUI (Terminal User Interface): [relayapp-chat/relay-tui](https://github.com/relayapp-chat/relay-tui)
 
-Web User Interface:
+Web UI (Web User Interface): Coming soon to a fox near you
