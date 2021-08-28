@@ -10,7 +10,9 @@
     "readline-sync": "^1.4.10",
     "ws": "^8.2.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "websocat": "^1.1.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

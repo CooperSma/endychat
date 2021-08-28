@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import WebSocket, { WebSocketServer } from 'ws';
 import chalk from 'chalk';
+import websocat from 'websocat';
 
 const wss = new WebSocketServer({ port: 8080 });
 console.log(chalk.blue(`
@@ -58,3 +59,9 @@ wss.on('connection', function connection(ws, req) {
   });
 });
 
+await websocat.create({
+  listen: "tcp-l:127.0.0.1:8081",
+  host: "ws://127.0.0.1:8080",
+  exitOnEOF: false,
+  binary: false,
+})
