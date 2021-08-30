@@ -12,6 +12,9 @@ console.log(chalk.blue(`
  ##.. ##::: ##...:::: ##::::::: #########:::: ##::::
  ##::. ##:: ##::::::: ##::::::: ##.... ##:::: ##::::
  ##:::. ##: ########: ########: ##:::: ##:::: ##::::
+ (server)
+ https://github.com/relayapp-chat/relay-server
+
 `));
 console.log(chalk.green("--> Server is listening on port " + wss.address().port))
 wss.on('connection', function connection(ws, req) {
@@ -35,7 +38,15 @@ wss.on('connection', function connection(ws, req) {
         ws.name = ws.username;
         console.log(chalk.blue('--> ' + ws.uuid + ' is now known as ' + ws.name));
       }
-    } else {
+    }
+    else if(String(message).startsWith("/msg")){
+      let user = String(message).substring(4);
+      ws.send(chalk.blue(`Type your message to ${user}: `))
+      
+
+
+    } 
+    else {
       wss.clients.forEach(function each(client) {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
           client.send("[" + ws.name + ']: ' + message);
