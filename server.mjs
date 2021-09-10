@@ -49,7 +49,7 @@ wss.on('connection', function connection(ws, req) {
     else {
       wss.clients.forEach(function each(client) {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send("[" + ws.name + ']: ' + message);
+          client.send("[" + ws.name + ']: ' + message + '\n');
         }
       });
     } 
