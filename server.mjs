@@ -3,6 +3,10 @@ import WebSocket, { WebSocketServer } from 'ws';
 import chalk from 'chalk';
 import websocat from 'websocat';
 
+process.on('SIGINT', function() {
+  process.exit();
+});
+
 const wss = new WebSocketServer({ port: 8080 });
 console.log(chalk.blue(`
  ########::'########:'##::::::::::'###::::'##:::'##:
