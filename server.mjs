@@ -20,7 +20,7 @@ console.log(chalk.blue(`
  https://github.com/relayapp-chat/relay-server
 
 `));
-console.log(chalk.green("--> Server is listening on port " + wss.address().port))
+console.log(("--> Server is listening on port " + wss.address().port))
 wss.on('connection', function connection(ws, req) {
   ws.uuid = randomUUID();
   ws.name = ws.uuid;
@@ -40,12 +40,12 @@ wss.on('connection', function connection(ws, req) {
       } else {
         ws.username = submittedUsername;
         ws.name = ws.username;
-        console.log(chalk.blue('--> ' + ws.uuid + ' is now known as ' + ws.name));
+        console.log(('--> ' + ws.uuid + ' is now known as ' + ws.name));
       }
     }
     else if(String(message).startsWith("/msg")){
       let user = String(message).substring(4);
-      ws.send(chalk.blue(`Type your message to ${user}: `))
+      ws.send((`Type your message to ${user}: `))
       
 
 
@@ -58,19 +58,19 @@ wss.on('connection', function connection(ws, req) {
       });
     } 
   });
-  console.log(chalk.green('--> ' + ws.name + ' has joined the chat'));
+  console.log(('--> ' + ws.name + ' has joined the chat'));
   wss.clients.forEach(function each(client) { 
     if(client !== ws && client.readyState === WebSocket.OPEN) {
-      client.send(chalk.green('--> ' + ws.name + ' has joined the chat') + '\n') 
+      client.send(('--> ' + ws.name + ' has joined the chat') + '\n') 
     } else if(client === ws && client.readyState === WebSocket.OPEN) {
-      client.send(chalk.green("--> You have joined the chat") + '\n')
+      client.send(("--> You have joined the chat") + '\n')
     }
   });
   ws.on('close', function close(req) {
     wss.clients.forEach(function each(client) { 
-      client.send(chalk.red('--> ' + ws.name + ' has left the chat') + '\n') 
+      client.send(('--> ' + ws.name + ' has left the chat') + '\n') 
     });
-    console.log(chalk.red("--> " + ws.name + ' has left the chat'));
+    console.log(("--> " + ws.name + ' has left the chat'));
   });
 });
 
