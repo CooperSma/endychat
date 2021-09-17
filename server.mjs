@@ -26,8 +26,10 @@ wss.on('connection', function connection(ws, req) {
   ws.name = ws.uuid;
   ws.username = null;
   ws.on('message', function incoming(message) {
-    if(String(message).startsWith("/register")) {
-      let submittedUsername = String(message).substring(10);
+    message = JSON.parse(String(message));
+    console.log(message.message)
+    if(message.message.startsWith("/register")) {
+      let submittedUsername = message.message.substring(10);
       let takenAlready;
       submittedUsername = String(submittedUsername).substring(0, submittedUsername.length - 1)
       wss.clients.forEach(function each(client) {
@@ -43,8 +45,8 @@ wss.on('connection', function connection(ws, req) {
         console.log(('--> ' + ws.uuid + ' is now known as ' + ws.name));
       }
     }
-    else if(String(message).startsWith("/msg")){
-      let user = String(message).substring(4);
+    else if(message.message.startsWith("/msg")){
+      let user = message.message.substring(4);
       ws.send((`Type your message to ${user}: `))
       
 
@@ -52,15 +54,15 @@ wss.on('connection', function connection(ws, req) {
     } 
     else {
       wss.clients.forEach(function each(client) {
-        if (client !== ws && client.readyState === WebSocket.OPEN) {
-          client.send("[" + ws.name + ']: ' + message + '\n');
+        if ( client.readyState === WebSocket.OPEN) {
+          client.send("[" + ws.name + ']: ' + message.message + '\n');
         }
       });
     } 
   });
   console.log(('--> ' + ws.name + ' has joined the chat'));
   wss.clients.forEach(function each(client) { 
-    if(client !== ws && client.readyState === WebSocket.OPEN) {
+    if(client.readyState === WebSocket.OPEN) {
       client.send(('--> ' + ws.name + ' has joined the chat') + '\n') 
     } else if(client === ws && client.readyState === WebSocket.OPEN) {
       client.send(("--> You have joined the chat") + '\n')
