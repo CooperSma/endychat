@@ -1,11 +1,13 @@
 import { randomUUID } from 'crypto';
 import WebSocket, { WebSocketServer } from 'ws';
 import chalk from 'chalk';
-import websocat from 'websocat';
+import * as Commands from './Commands.mjs';
+
 
 process.on('SIGINT', function() {
   process.exit();
 });
+console.log()
 
 const wss = new WebSocketServer({ port: 8080 });
 console.log(chalk.blue(`
@@ -20,65 +22,51 @@ console.log(chalk.blue(`
  https://github.com/relayapp-chat/relay-server
 
 `));
+
+function broadcastToAll(wss,ws,message,allButCient) {
+  wss.clients.forEach(function each(client) {
+      if(allButCient == true) {
+        if (client.readyState === WebSocket.OPEN && client != ws) {
+          client.send(message);
+        }
+      } else {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(message)
+        }
+      }
+      });
+}
+
+
 console.log(("--> Server is listening on port " + wss.address().port))
+
 wss.on('connection', function connection(ws, req) {
   ws.uuid = randomUUID();
   ws.name = ws.uuid;
   ws.username = null;
-  ws.on('message', function incoming(message) {
-    message = JSON.parse(String(message));
-    console.log(message.message)
-    if(message.message.startsWith("/register")) {
-      let submittedUsername = message.message.substring(10);
-      let takenAlready;
-      submittedUsername = String(submittedUsername).substring(0, submittedUsername.length - 1)
-      wss.clients.forEach(function each(client) {
-        if(client.username == submittedUsername) {
-          takenAlready = true;
-        }
-      })
-      if (takenAlready == true) {
-        ws.send("Username already taken \n");
-      } else {
-        ws.username = submittedUsername;
-        ws.name = ws.username;
-        console.log(('--> ' + ws.uuid + ' is now known as ' + ws.name));
-      }
-    }
-    else if(message.message.startsWith("/msg")){
-      let user = message.message.substring(4);
-      ws.send((`Type your message to ${user}: `))
-      
-
-
-    } 
-    else {
-      wss.clients.forEach(function each(client) {
-        if ( client.readyState === WebSocket.OPEN) {
-          client.send("[" + ws.name + ']: ' + message.message + '\n');
-        }
-      });
-    } 
-  });
+  ws.channel = "general"
   console.log(('--> ' + ws.name + ' has joined the chat'));
   wss.clients.forEach(function each(client) { 
-    if(client.readyState === WebSocket.OPEN) {
+    if(client == ws && client.readyState == WebSocket.OPEN) {
       client.send(('--> ' + ws.name + ' has joined the chat') + '\n') 
-    } else if(client === ws && client.readyState === WebSocket.OPEN) {
+    } else if(client.readyState === WebSocket.OPEN) {
       client.send(("--> You have joined the chat") + '\n')
     }
   });
+  
+  ws.on('message', function incoming(message) {
+    message = String(message);
+    console.log(message)
+    Promise.any(Commands.promises(message)).then(callback => callback(ws,wss,WebSocket,message)).catch(res => {
+      broadcastToAll(wss,ws,`[${ws.name}]: ${message}\n`,false);
+    });
+  })
+
   ws.on('close', function close(req) {
     wss.clients.forEach(function each(client) { 
       client.send(('--> ' + ws.name + ' has left the chat') + '\n') 
     });
     console.log(("--> " + ws.name + ' has left the chat'));
   });
-});
 
-await websocat.create({
-  listen: "tcp-l:0.0.0.0:8081",
-  host: "ws://127.0.0.1:8080",
-  exitOnEOF: false,
-  binary: false,
-})
+});
