@@ -35,10 +35,10 @@ const commands = [
             }
 	    return;
 	  }),
-  new Command("/channel", function(ws,wss,WebSocket,message){
-    if(message.substring(9) == "new") {
-      message = message.substring()
-    }
+  new Command("/join", function(ws,wss,WebSocket,message){
+      message = message.substring(5)
+      ws.channel = message;
+      ws.send("Joined channel " + ws.channel + '\n')
   })
 
 	]

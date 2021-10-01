@@ -23,9 +23,20 @@ console.log(chalk.blue(`
 
 `));
 
-function broadcastToAll(wss,ws,message,allButCient) {
+function broadcastToAll(wss,ws,message,allButClient,channelRespecting) {
   wss.clients.forEach(function each(client) {
-      if(allButCient == true) {
+    if(channelRespecting == true) {
+      if(allButClient == true) {
+        if (client.readyState === WebSocket.OPEN && client != ws && ws.channel == client.channel) {
+          client.send(message);
+        }
+      } else {
+        if (client.readyState === WebSocket.OPEN && ws.channel == client.channel) {
+          client.send(message)
+        }
+      }
+    } else {
+      if(allButClient == true) {
         if (client.readyState === WebSocket.OPEN && client != ws) {
           client.send(message);
         }
@@ -34,7 +45,9 @@ function broadcastToAll(wss,ws,message,allButCient) {
           client.send(message)
         }
       }
-      });
+
+    }
+  });
 }
 
 
@@ -58,7 +71,7 @@ wss.on('connection', function connection(ws, req) {
     message = String(message);
     console.log(message)
     Promise.any(Commands.promises(message)).then(callback => callback(ws,wss,WebSocket,message)).catch(res => {
-      broadcastToAll(wss,ws,`[${ws.name}]: ${message}\n`,false);
+      broadcastToAll(wss,ws,`[${ws.name} ${ws.channel}]: ${message}\n`,false,true);
     });
   })
 
