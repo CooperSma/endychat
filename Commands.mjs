@@ -1,3 +1,5 @@
+import { Channel } from "./Channels.mjs";
+
 class Command {
   constructor(command, callback) {
     this.check = (message) => new Promise((resolve, reject) => {
@@ -35,13 +37,37 @@ const commands = [
             }
 	    return;
 	  }),
-  new Command("/join", function(ws,wss,WebSocket,message){
-      message = message.substring(5)
-      ws.channel = message;
-      ws.send("Joined channel " + ws.channel + '\n')
+  new Command("/join", (ws,wss,WebSocket,Channels,message) => joinChannel(ws,wss,WebSocket,Channels,message)),
+  new Command("/create", function(ws,wss,WebSocket,Channels,message){
+      message = message.substring(8)
+      console.log(message)
+      let newChannelIndex = Number(Channels.channels.push(new Channel(message))) - 1;
+      ws.channel = Channels.channels[newChannelIndex]
+      ws.send(`Created and joined channel ${ws.channel.name}`)   
   })
 
 	]
+
+function joinChannel(ws,wss,WebSocket,Channels,message){
+      message = message.substring(6)
+      console.log(Channels.channels[0])
+      console.log(message)
+      let channel;
+      let realChannel = false;
+      for (let element of Channels.channels) {
+        if (element.name == message) {
+          realChannel = true;
+          channel = element;
+          break;
+        }
+      }
+      if(realChannel == true) {
+        ws.channel = channel;
+        ws.send("Joined channel " + ws.channel.name + '\n')
+      } else {
+        ws.send("Invalid channel\n")
+      }
+  }
 
 const promises = (message) => {
   let array = []
