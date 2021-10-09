@@ -14,7 +14,7 @@ class Command {
 }
 
 const commands = [
-	  new Command("/register", function(ws, wss, WebSocket, message) {
+	  new Command("/register", function(ws, wss, WebSocket, Channels, message) {
             let submittedUsername = message.substring(10)
             let takenAlready;
             wss.clients.forEach(function each(client) {
@@ -43,7 +43,7 @@ const commands = [
       console.log(message)
       let newChannelIndex = Number(Channels.channels.push(new Channel(message))) - 1;
       ws.channel = Channels.channels[newChannelIndex]
-      ws.send(`Created and joined channel ${ws.channel.name}`)   
+      ws.send(`Created and joined channel ${ws.channel.name}\n`)   
   })
 
 	]
