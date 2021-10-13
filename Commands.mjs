@@ -14,10 +14,10 @@ class Command {
 }
 
 const commands = [
-	  new Command("/register", function(ws, wss, WebSocket, Channels, message) {
+	  new Command("/register", function(ws, connections, WebSocket, Channels, message) {
             let submittedUsername = message.substring(10)
             let takenAlready;
-            wss.clients.forEach(function each(client) {
+            connections.forEach(function each(client) {
               if(client.username == submittedUsername) {
                 takenAlready = true;
               }
@@ -28,27 +28,29 @@ const commands = [
               let oldName = ws.name;
               ws.username = submittedUsername;
               ws.name = ws.username;
-              wss.clients.forEach(client => {
+              connections.forEach(client => {
                 if(client.readyState === WebSocket.OPEN && client != ws) {
                   client.send('--> ' + oldName + ' is now known as ' + ws.name + '\n');
                 }
               });          
               ws.send("Registered!\n")
+              connections[ws.connectionID] = ws;
             }
 	    return;
 	  }),
-  new Command("/join", (ws,wss,WebSocket,Channels,message) => joinChannel(ws,wss,WebSocket,Channels,message)),
-  new Command("/create", function(ws,wss,WebSocket,Channels,message){
+  new Command("/join", (ws,connections,WebSocket,Channels,message) => joinChannel(ws,connections,WebSocket,Channels,message)),
+  new Command("/create", function(ws,connections,WebSocket,Channels,message){
       message = message.substring(8)
       console.log(message)
       let newChannelIndex = Number(Channels.channels.push(new Channel(message))) - 1;
       ws.channel = Channels.channels[newChannelIndex]
-      ws.send(`Created and joined channel ${ws.channel.name}\n`)   
+      ws.send(`Created and joined channel ${ws.channel.name}\n`)
+      connections[ws.connectionID] = ws;
   })
 
 	]
 
-function joinChannel(ws,wss,WebSocket,Channels,message){
+function joinChannel(ws,connections,WebSocket,Channels,message){
       message = message.substring(6)
       console.log(Channels.channels[0])
       console.log(message)
@@ -64,6 +66,7 @@ function joinChannel(ws,wss,WebSocket,Channels,message){
       if(realChannel == true) {
         ws.channel = channel;
         ws.send("Joined channel " + ws.channel.name + '\n')
+        connections[ws.connectionID] = ws;
       } else {
         ws.send("Invalid channel\n")
       }

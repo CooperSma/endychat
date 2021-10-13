@@ -4,40 +4,17 @@ import bodyParser from "body-parser";
 import chalk from 'chalk';
 import * as Commands from './Commands.mjs';
 import * as Channels from './Channels.mjs';
-// const express = require("express");
-// const bodyParser = require("body-pdarser");
-import express from 'express';
+import Koa from 'koa';
+import Router from 'koa-router';
+import websocket from 'koa-easy-ws';
+import { ClientRequest } from 'http';
 
-const app = express();
-
-app.get("/", (req, res) => {
-    res.send("frick you cooper");
-});
-
-app.listen(3000);
- 
-
-process.on('SIGINT', function() {
-  process.exit();
-});
-console.log()
-
-const wss = new WebSocketServer({ port: 8080 });
-console.log(chalk.blue(`
- ########::'########:'##::::::::::'###::::'##:::'##:
- ##.... ##: ##.....:: ##:::::::::'## ##:::. ##:'##::
- ##:::: ##: ##::::::: ##::::::::'##:. ##:::. ####:::
- ########:: ######::: ##:::::::'##:::. ##:::. ##::::
- ##.. ##::: ##...:::: ##::::::: #########:::: ##::::
- ##::. ##:: ##::::::: ##::::::: ##.... ##:::: ##::::
- ##:::. ##: ########: ########: ##:::: ##:::: ##::::
- (server)
- https://github.com/relayapp-chat/relay-server
-
-`));
-
-function broadcastToAll(wss,ws,message,allButClient,channelRespecting) {
-  wss.clients.forEach(function each(client) {
+const app = new Koa();
+const router = new Router();
+app.use(websocket())
+let connections = [];
+function broadcastToAll(connections,ws,message,allButClient,channelRespecting) {
+  connections.forEach(function each(client) {
     if(channelRespecting == true) {
       if(allButClient == true) {
         if (client.readyState === WebSocket.OPEN && client != ws && ws.channel.name == client.channel.name) {
@@ -62,37 +39,69 @@ function broadcastToAll(wss,ws,message,allButClient,channelRespecting) {
     }
   });
 }
-
-
-console.log(("--> Server is listening on port " + wss.address().port))
-
-wss.on('connection', function connection(ws, req) {
-  ws.uuid = randomUUID();
-  ws.name = ws.uuid;
-  ws.username = null;
-  ws.channel = Channels.channels[0]
-  console.log(('--> ' + ws.name + ' has joined the chat'));
-  wss.clients.forEach(function each(client) { 
-    if(client == ws && client.readyState == WebSocket.OPEN) {
-      client.send(("--> You have joined the chat") + '\n') 
-    } else if(client.readyState === WebSocket.OPEN) {
-      client.send(('--> ' + ws.name + ' has joined the chat') + '\n')
-    }
-  });
-  
-  ws.on('message', function incoming(message) {
-    message = String(message);
-    console.log(message)
-    Promise.any(Commands.promises(message)).then(callback => callback(ws,wss,WebSocket,Channels,message)).catch(res => {
-      broadcastToAll(wss,ws,`[${ws.name} ${ws.channel.name}]: ${message}\n`,false,true);
-    });
-  })
-
-  ws.on('close', function close(req) {
-    wss.clients.forEach(function each(client) { 
-      client.send(('--> ' + ws.name + ' has left the chat') + '\n') 
-    });
-    console.log(("--> " + ws.name + ' has left the chat'));
-  });
-
+router.get("/channels", async ctx => {
+    ctx.body = Channels.channels;
 });
+router.get("/server", async ctx => {
+  if (ctx.ws) {
+    const ws = await ctx.ws()
+    ws.uuid = randomUUID();
+    ws.name = ws.uuid;
+    ws.username = null;
+    ws.channel = Channels.channels[0]
+    ws.connectionID = Number(connections.push(ws)) - 1;
+    connections[ws.connectionID] = ws;
+    console.log(('--> ' + ws.name + ' has joined the chat'));
+    connections.forEach(function each(client) { 
+      if(client == ws && client.readyState == WebSocket.OPEN) {
+        client.send(("--> You have joined the chat") + '\n') 
+      } else if(client.readyState === WebSocket.OPEN) {
+        client.send(('--> ' + ws.name + ' has joined the chat') + '\n')
+      }
+    });
+  
+    ws.on('message', function incoming(message) {
+        message = String(message);
+        console.log(message)
+        Promise.any(Commands.promises(message)).then(callback => callback(ws,connections,WebSocket,Channels,message)).catch(res => {
+            broadcastToAll(connections, ws,`[${ws.name} ${ws.channel.name}]: ${message}\n`,false,true);
+        });
+    })
+
+    ws.on('close', function close(req) {
+        connections.forEach(function each(client) { 
+            client.send(('--> ' + ws.name + ' has left the chat') + '\n') 
+        });
+        console.log(("--> " + ws.name + ' has left the chat'));
+    });
+    ctx.status = 200;
+} else {
+    ctx.body = "HTTP request sent to WebSocket server"
+    ctx.status = 403;
+  }
+})
+
+app
+  .use(router.routes())
+  .use(router.allowedMethods());
+const listener = app.listen(3000);
+ 
+
+process.on('SIGINT', function() {
+  process.exit();
+});
+
+console.log(chalk.blue(`
+ ########::'########:'##::::::::::'###::::'##:::'##:
+ ##.... ##: ##.....:: ##:::::::::'## ##:::. ##:'##::
+ ##:::: ##: ##::::::: ##::::::::'##:. ##:::. ####:::
+ ########:: ######::: ##:::::::'##:::. ##:::. ##::::
+ ##.. ##::: ##...:::: ##::::::: #########:::: ##::::
+ ##::. ##:: ##::::::: ##::::::: ##.... ##:::: ##::::
+ ##:::. ##: ########: ########: ##:::: ##:::: ##::::
+ (server)
+ https://github.com/relayapp-chat/relay-server
+
+`));
+console.log(`--> Server is listening on ${listener.address().address}:${listener.address().port}`)
+ 
