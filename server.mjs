@@ -39,6 +39,10 @@ function broadcastToAll(connections,ws,message,allButClient,channelRespecting) {
     }
   });
 }
+router.get("/", async ctx => {
+    ctx.body = "Relay Server is running";
+});
+
 router.get("/channels", async ctx => {
     ctx.body = Channels.channels;
 });
@@ -84,7 +88,7 @@ router.get("/server", async ctx => {
 app
   .use(router.routes())
   .use(router.allowedMethods());
-const listener = app.listen(3000);
+const listener = app.listen(2428);
  
 
 process.on('SIGINT', function() {
